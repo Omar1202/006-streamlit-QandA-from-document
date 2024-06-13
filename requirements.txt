@@ -1,5 +1,6 @@
 streamlit
 langchain
+langchain_huggingface
 #langchain-openai
 sentence_transformers
 langchain-groq
