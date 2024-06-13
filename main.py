@@ -5,9 +5,10 @@ sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 import streamlit as st
 import chromadb
 import sqlite3
-from langchain_openai import OpenAI
+from langchain_groq import ChatGroq
 from langchain.chains import RetrievalQA
-from langchain.embeddings.openai import OpenAIEmbeddings
+# from langchain.embeddings.groq import OpenAIEmbeddings
+from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from PyPDF2 import PdfReader
@@ -21,7 +22,7 @@ from PyPDF2 import PdfReader
 # Run QA chain
 # Output
 
-def generate_response(file, openai_api_key, query):
+def generate_response(file, groq_api_key, query):
     #format file
     reader = PdfReader(file)
     formatted_document = []
@@ -34,7 +35,7 @@ def generate_response(file, openai_api_key, query):
     )
     docs = text_splitter.create_documents(formatted_document)
     #create embeddings
-    embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
+    embeddings = HuggingFaceEmbeddings()
     #load to vector database
     #store = Chroma.from_documents(texts, embeddings)
 
@@ -42,12 +43,12 @@ def generate_response(file, openai_api_key, query):
     
     #create retrieval chain
     retrieval_chain = RetrievalQA.from_chain_type(
-        llm=OpenAI(temperature=0, openai_api_key=openai_api_key),
+        llm=OpenAI(temperature=0, api_key=groq_api_key, model="llama3-70b-8192"),
         chain_type="stuff",
         retriever=store.as_retriever()
     )
     #run chain with query
-    return retrieval_chain.run(query)
+    return retrieval_chain.invoke(query)
 
 st.set_page_config(
     page_title="Q&A from a long PDF Document"
@@ -70,8 +71,8 @@ with st.form(
     "myform",
     clear_on_submit=True
 ):
-    openai_api_key = st.text_input(
-        "OpenAI API Key:",
+    groq_api_key = st.text_input(
+        "Groq API Key:",
         type="password",
         disabled=not (uploaded_file and query_text)
     )
@@ -79,17 +80,17 @@ with st.form(
         "Submit",
         disabled=not (uploaded_file and query_text)
     )
-    if submitted and openai_api_key.startswith("sk-"):
+    if submitted and groq_api_key.startswith("gsk_"):
         with st.spinner(
             "Wait, please. I am working on it..."
             ):
             response = generate_response(
                 uploaded_file,
-                openai_api_key,
+                groq_api_key,
                 query_text
             )
             result.append(response)
-            del openai_api_key
+            del groq_api_key
             
 if len(result):
     st.info(response)
