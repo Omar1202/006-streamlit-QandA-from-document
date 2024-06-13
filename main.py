@@ -43,7 +43,7 @@ def generate_response(file, groq_api_key, query):
     
     #create retrieval chain
     retrieval_chain = RetrievalQA.from_chain_type(
-        llm=OpenAI(temperature=0, api_key=groq_api_key, model="llama3-70b-8192"),
+        llm=ChatGroq(temperature=0, api_key=groq_api_key, model="llama3-70b-8192"),
         chain_type="stuff",
         retriever=store.as_retriever()
     )
